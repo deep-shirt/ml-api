@@ -2,3 +2,5 @@ flask
 flask-restful
 requests
 Pillow
+firebase-admin
+Flask-API

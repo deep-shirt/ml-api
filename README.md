@@ -20,12 +20,12 @@ neural-art (slow)
 
    `num_iterations=[num-of-forward-passes]`
 
-   `max-size=[max-image-size]`
+   `maxsize=[max-image-size]`
 
 * **Success Response:**
 
   * **Code:** 200 <br />
-    **Content:** `{ result_url : <todo..> }`
+    **Content:** `{ result_url : <result-image-url> }`
  
 * **Error Response:**
 
@@ -34,7 +34,7 @@ neural-art (slow)
 
 * **Sample Call:**
 
-    `curl -d "content=http://s3.amazonaws.com/factmag-images/wp-content/uploads/2017/02/cefa0d0aa7cd199d3a4b6202f7f300db.jpg&style=https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1280px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg&num_iterations=1000&maxsize=700" http://127.0.0.1:8080/neural-art`
+    `curl -d "content=http://s3.amazonaws.com/factmag-images/wp-content/uploads/2017/02/cefa0d0aa7cd199d3a4b6202f7f300db.jpg&style=https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1280px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg&num_iterations=1000&maxsize=700" http://<ip>:8080/neural-art`
 
   
 fast-style-transfer (guess what)
@@ -54,12 +54,12 @@ fast-style-transfer (guess what)
 
    `checkpoint=[la_muse|rain_princess|scream|udnie|wave|wreck]`
 
-   `max-size=[max-image-size]`
+   `maxsize=[max-image-size]`
 
 * **Success Response:**
 
   * **Code:** 200 <br />
-    **Content:** `{ result_url : <todo..> }`
+    **Content:** `{ result_url : <result-image-url> }`
  
 * **Error Response:**
 
@@ -68,6 +68,6 @@ fast-style-transfer (guess what)
 
 * **Sample Call:**
 
-    `curl -d "content=https://scstylecaster.files.wordpress.com/2016/05/hot-surfer-guys-feat.jpg&checkpoint=scream.ckpt&maxsize=600" http://127.0.0.1:8080/fast-style-transfer`
+    `curl -d "content=https://scstylecaster.files.wordpress.com/2016/05/hot-surfer-guys-feat.jpg&checkpoint=scream.ckpt&maxsize=600" http://<ip>:8080/fast-style-transfer`
 
   

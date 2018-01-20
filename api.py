@@ -1,14 +1,20 @@
 from flask import Flask
 from flask_restful import Resource, Api
 from flask_restful import reqparse
+from flask_api import status
 
 from PIL import Image
 from io import BytesIO
+
+import google.cloud.storage
+from google.cloud.storage.blob import Blob
+
 
 import requests
 import os
 import time
 
+import datetime
 
 
 
@@ -52,7 +58,7 @@ def fast_style_transfer(content_filename, checkpoint):
           ' --in-path ' + content_filename +\
           ' --out-path ' + output_filename 
 
-    run(cmd, output_filename)
+    return run(cmd, output_filename)
 
 
 def neural_style(content_filename, style_filename, num_iterations):
@@ -64,10 +70,17 @@ def neural_style(content_filename, style_filename, num_iterations):
                                         ' --output ' + output_filename  +\
                                         ' --network neural-style/imagenet-vgg-verydeep-19.mat' +\
                                         ' --iterations ' + str(num_iterations)
+    return run(cmd, output_filename)
 
 
-    run(cmd, output_filename)
-    
+def store_to_firebase(output_file):
+    blob = Blob(output_file, bucket)
+    blob.upload_from_filename(filename=output_file)
+    print(blob.public_url)
+    url = blob.generate_signed_url(datetime.timedelta(days=1000))
+    print(url)
+    return url 
+
 
 def run(cmd, output_filename):
     print("Running " + cmd)
@@ -76,9 +89,11 @@ def run(cmd, output_filename):
     elapsed = int(time.time()-start)
     print('Return Value = ' + str(ret))
     print('Elapsed = ' + str(elapsed))
-    new_filename = output_filename.split('.')[0] + '_' + str(elapsed) + 's' + output_filename.split('.')[1]
-    os.system('mv ' + output_filename + ' ' + new_filename)
-    print('Created ' + new_filename)
+    result_url = store_to_firebase(output_filename)
+    # new_filename = output_filename.split('.')[0] + '_' + str(elapsed) + 's' + output_filename.split('.')[1]
+    # os.system('mv ' + output_filename + ' ' + new_filename)
+    # print('Created ' + new_filename)
+    return result_url
 
 
 class NeuralArt(Resource):
@@ -100,12 +115,10 @@ class NeuralArt(Resource):
             style_filename   = write_image(style_url, 'style/style', maxsize)
         except (requests.exceptions.MissingSchema, Exception) as e:
             print(str(e))
-            return 'error', HTTP_400_BAD_REQUEST
+            return 'error', status.HTTP_400_BAD_REQUEST
 
-        neural_style(content_filename, style_filename, num_iterations)
+        result_url = neural_style(content_filename, style_filename, num_iterations)
 
-        result_url = 'todo'
-        
         return {'result_url': result_url}
 
 
@@ -121,21 +134,31 @@ class FastStyleTransfer(Resource):
         checkpoint = 'fast-style-transfer/checkpoints/' + args['checkpoint'] + '.ckpt'
         maxsize = args['maxsize']
 
+        print(args)
+
         try:
             content_filename = write_image(content_url, 'content/content', maxsize)
         except (requests.exceptions.MissingSchema, Exception) as e:
             print(str(e))
-            return 'error', HTTP_400_BAD_REQUEST
+            return 'error', status.HTTP_400_BAD_REQUEST
 
-        fast_style_transfer(content_filename, checkpoint)
-
-        result_url = 'todo'
+        result_url = fast_style_transfer(content_filename, checkpoint)
         
         return {'result_url': result_url}
 
 api.add_resource(NeuralArt, '/neural-art')
 api.add_resource(FastStyleTransfer, '/fast-style-transfer')
 
+client = google.cloud.storage.Client(project='deep-shirt')
+
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import storage
+
+cred = credentials.Certificate('/home/lorenzo/deep-shirt-firebase-adminsdk-ed8e6-664533ebf9.json')
+firebase_admin.initialize_app(cred, { 'storageBucket': 'deep-shirt.appspot.com' })
+
+bucket = storage.bucket()
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)
