@@ -103,3 +103,8 @@ ENV/
 *.jpeg
 *.jpg
 *.png
+*.swp
+
+content/
+style/
+output/
