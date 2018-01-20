@@ -10,11 +10,6 @@ import os
 import time
 
 
-parser = reqparse.RequestParser()
-parser.add_argument('content', type=str, help='Content Image URL')
-parser.add_argument('style', type=str, help='Style Image URL')
-parser.add_argument('num_iterations', type=int, help='Number of iterations')
-parser.add_argument('maxsize', type=int, help='Max size of image')
 
 
 app = Flask(__name__)
@@ -49,10 +44,18 @@ def write_image(url, filename, maxsize):
     return filename
 
 
-def run_neural_style(content_filename, 
-                     style_filename, 
-                     num_iterations):
-    
+def fast_style_transfer(content_filename, checkpoint):
+    shape_ext = content_filename.split('_')[1]
+    output_filename = 'output/FAST_output_' + shape_ext 
+
+    cmd = 'python ./fast-style-transfer/evaluate.py --checkpoint ' + checkpoint +\
+          ' --in-path ' + content_filename +\
+          ' --out-path ' + output_filename 
+
+    run(cmd, output_filename)
+
+
+def neural_style(content_filename, style_filename, num_iterations):
     shape_ext = content_filename.split('_')[1]
     output_filename = 'output/output' + str(num_iterations) + '_' + shape_ext 
 
@@ -61,6 +64,12 @@ def run_neural_style(content_filename,
                                         ' --output ' + output_filename  +\
                                         ' --network neural-style/imagenet-vgg-verydeep-19.mat' +\
                                         ' --iterations ' + str(num_iterations)
+
+
+    run(cmd, output_filename)
+    
+
+def run(cmd, output_filename):
     print("Running " + cmd)
     start = time.time()
     ret = os.system(cmd)
@@ -72,9 +81,15 @@ def run_neural_style(content_filename,
     print('Created ' + new_filename)
 
 
-class StyleTransfer(Resource):
+class NeuralArt(Resource):
     def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('content', type=str, help='Content Image URL')
+        parser.add_argument('style', type=str, help='Style Image URL')
+        parser.add_argument('num_iterations', type=int, help='Number of iterations')
+        parser.add_argument('maxsize', type=int, help='Max size of image')
         args = parser.parse_args()
+
         content_url = args['content']
         style_url = args['style']
         num_iterations = args['num_iterations']
@@ -85,17 +100,41 @@ class StyleTransfer(Resource):
             style_filename   = write_image(style_url, 'style/style', maxsize)
         except (requests.exceptions.MissingSchema, Exception) as e:
             print(str(e))
-            return 'error'
+            return 'error', HTTP_400_BAD_REQUEST
 
-        run_neural_style(content_filename, 
-                         style_filename,
-                         num_iterations)
+        neural_style(content_filename, style_filename, num_iterations)
 
         result_url = 'todo'
         
         return {'result_url': result_url}
 
-api.add_resource(StyleTransfer, '/')
+
+class FastStyleTransfer(Resource):
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('content', type=str, help='Content Image URL')
+        parser.add_argument('checkpoint', type=str, help='Path to the checkpoint file')
+        parser.add_argument('maxsize', type=int, help='Max size of image')
+        args = parser.parse_args()
+
+        content_url = args['content']
+        checkpoint = 'fast-style-transfer/checkpoints/' + args['checkpoint'] + '.ckpt'
+        maxsize = args['maxsize']
+
+        try:
+            content_filename = write_image(content_url, 'content/content', maxsize)
+        except (requests.exceptions.MissingSchema, Exception) as e:
+            print(str(e))
+            return 'error', HTTP_400_BAD_REQUEST
+
+        fast_style_transfer(content_filename, checkpoint)
+
+        result_url = 'todo'
+        
+        return {'result_url': result_url}
+
+api.add_resource(NeuralArt, '/neural-art')
+api.add_resource(FastStyleTransfer, '/fast-style-transfer')
 
 
 if __name__ == '__main__':
