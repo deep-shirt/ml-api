@@ -2,6 +2,7 @@ from flask import Flask
 from flask_restful import Resource, Api
 from flask_restful import reqparse
 from flask_api import status
+from flask_cors import CORS
 
 from PIL import Image
 from io import BytesIO
@@ -15,10 +16,12 @@ import os
 import time
 
 import datetime
+import threading
 
 
 
 app = Flask(__name__)
+CORS(app)
 api = Api(app)
 
 
@@ -76,13 +79,15 @@ def neural_style(content_filename, style_filename, num_iterations):
 def store_to_firebase(output_file):
     blob = Blob(output_file, bucket)
     blob.upload_from_filename(filename=output_file)
-    print(blob.public_url)
     url = blob.generate_signed_url(datetime.timedelta(days=1000))
     print(url)
     return url 
 
 
 def run(cmd, output_filename):
+
+    lock.acquire() 
+
     print("Running " + cmd)
     start = time.time()
     ret = os.system(cmd)
@@ -90,9 +95,9 @@ def run(cmd, output_filename):
     print('Return Value = ' + str(ret))
     print('Elapsed = ' + str(elapsed))
     result_url = store_to_firebase(output_filename)
-    # new_filename = output_filename.split('.')[0] + '_' + str(elapsed) + 's' + output_filename.split('.')[1]
-    # os.system('mv ' + output_filename + ' ' + new_filename)
-    # print('Created ' + new_filename)
+
+    lock.release()
+
     return result_url
 
 
@@ -129,9 +134,12 @@ class FastStyleTransfer(Resource):
         parser.add_argument('checkpoint', type=str, help='Path to the checkpoint file')
         parser.add_argument('maxsize', type=int, help='Max size of image')
         args = parser.parse_args()
+        
+        if not args['checkpoint'].endswith('.ckpt'):
+            return 'error - style file must end with .ckpt', status.HTTP_400_BAD_REQUEST
 
         content_url = args['content']
-        checkpoint = 'fast-style-transfer/checkpoints/' + args['checkpoint'] + '.ckpt'
+        checkpoint = 'fast-style-transfer/checkpoints/' + args['checkpoint']
         maxsize = args['maxsize']
 
         print(args)
@@ -160,5 +168,9 @@ firebase_admin.initialize_app(cred, { 'storageBucket': 'deep-shirt.appspot.com' 
 
 bucket = storage.bucket()
 
+lock = threading.Lock()
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    # app.run(host='0.0.0.0', ssl_context='adhoc', port=8080, debug=True)
+    path = '/home/lorenzo/letsencrypt/certs/live/deep.deep-shirt.com/'
+    app.run(host='0.0.0.0', port=8080, debug=True, ssl_context=(path + 'fullchain.pem', path + 'privkey.pem'))
