@@ -163,7 +163,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import storage
 
-cred = credentials.Certificate('/home/lorenzo/deep-shirt-firebase-adminsdk-ed8e6-664533ebf9.json')
+cred = credentials.Certificate('/home/kvnrpb/deep-shirt-firebase-adminsdk.json')
 firebase_admin.initialize_app(cred, { 'storageBucket': 'deep-shirt.appspot.com' })
 
 bucket = storage.bucket()
@@ -171,6 +171,6 @@ bucket = storage.bucket()
 lock = threading.Lock()
 
 if __name__ == '__main__':
-    # app.run(host='0.0.0.0', ssl_context='adhoc', port=8080, debug=True)
-    path = '/home/lorenzo/letsencrypt/certs/live/deep.deep-shirt.com/'
-    app.run(host='0.0.0.0', port=8080, debug=True, ssl_context=(path + 'fullchain.pem', path + 'privkey.pem'))
+    app.run(host='0.0.0.0', port=8080, debug=True)
+    path = '/home/kvnrpb/letsencrypt/certs/live/deep.deep-shirt.com/'
+    # app.run(host='0.0.0.0', port=8080, debug=True, ssl_context=(path + 'fullchain.pem', path + 'privkey.pem'))
