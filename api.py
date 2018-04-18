@@ -41,8 +41,9 @@ def write_image(url, filename, maxsize):
     img = Image.open(BytesIO(req.content)) 
 
     w, h = resize_img(img, maxsize)
-
-    filename = filename + '_' + str(w) + 'x' + str(h) + '.' + ext
+    
+    t = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d-%H:%M:%S')
+    filename = filename + '_' + t + '_' + str(w) + 'x' + str(h) + '.' + ext
     img.save(filename)
     # raise Exception()
 
@@ -52,10 +53,11 @@ def write_image(url, filename, maxsize):
     print('Written ' + filename + '.. ')
     return filename
 
-
 def fast_style_transfer(content_filename, checkpoint):
-    shape_ext = content_filename.split('_')[1]
-    output_filename = 'output/FAST_output_' + shape_ext 
+    ts = content_filename.split('_')[1]
+    shape_ext = content_filename.split('_')[2]
+    
+    output_filename = 'output/FAST_output_' + ts + '_' + shape_ext 
 
     cmd = 'python ./fast-style-transfer/evaluate.py --checkpoint ' + checkpoint +\
           ' --in-path ' + content_filename +\
@@ -65,8 +67,10 @@ def fast_style_transfer(content_filename, checkpoint):
 
 
 def neural_style(content_filename, style_filename, num_iterations):
-    shape_ext = content_filename.split('_')[1]
-    output_filename = 'output/output' + str(num_iterations) + '_' + shape_ext 
+    ts = content_filename.split('_')[1]
+    shape_ext = content_filename.split('_')[2]
+    
+    output_filename = 'output/output_' + str(num_iterations) + '_' + ts + '_' + shape_ext  
 
     cmd = 'python ./neural-style/neural_style.py --content ' + content_filename +\
                                         ' --styles ' + style_filename   +\
@@ -171,6 +175,6 @@ bucket = storage.bucket()
 lock = threading.Lock()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    # app.run(host='0.0.0.0', port=8080, debug=True)
     path = '/home/kvnrpb/letsencrypt/certs/live/deep.deep-shirt.com/'
-    # app.run(host='0.0.0.0', port=8080, debug=True, ssl_context=(path + 'fullchain.pem', path + 'privkey.pem'))
+    app.run(host='0.0.0.0', port=8080, debug=True, ssl_context=(path + 'fullchain.pem', path + 'privkey.pem'))

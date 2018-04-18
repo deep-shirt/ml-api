@@ -108,3 +108,12 @@ ENV/
 content/
 style/
 output/
+fast-style-transfer/docs.md
+fast-style-transfer/evaluate.py
+fast-style-transfer/examples
+fast-style-transfer/README.md
+fast-style-transfer/setup.sh
+fast-style-transfer/src
+fast-style-transfer/style.py
+fast-style-transfer/transform_video.py
+
