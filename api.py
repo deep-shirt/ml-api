@@ -176,5 +176,5 @@ lock = threading.Lock()
 
 if __name__ == '__main__':
     # app.run(host='0.0.0.0', port=8080, debug=True)
-    path = '/home/kvnrpb/letsencrypt/certs/live/deep.deep-shirt.com/'
+    path = '/home/kvnrpb/letsencrypt/certs/live/api.deep-shirt.com/'
     app.run(host='0.0.0.0', port=8080, debug=True, ssl_context=(path + 'fullchain.pem', path + 'privkey.pem'))
